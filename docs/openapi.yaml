@@ -1,0 +1,417 @@
+openapi: 3.0.3
+info:
+  title: API Gestión de Eventos Académicos
+  description: API REST para la gestión de eventos universitarios, ponentes y asistentes. Diseñada para la asignatura, interactúa con MongoDB y APIs externas, soportando JSON y XML.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Servidor Local de Desarrollo
+
+tags:
+  - name: Eventos
+    description: Gestión de actos académicos
+  - name: Ponentes
+    description: Gestión de expertos y ponentes
+  - name: Asistentes
+    description: Gestión de inscripciones y asistentes
+
+paths:
+  /events:
+    get:
+      tags:
+        - Eventos
+      summary: Obtener un listado de todos los eventos
+      responses:
+        '200':
+          description: Lista de eventos devuelta con éxito
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evento'
+    post:
+      tags:
+        - Eventos
+      summary: Crear un nuevo evento académico
+      description: Al crear un evento, el servidor consume una API externa para obtener coordenadas y clima del lugar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoInput'
+      responses:
+        '201':
+          description: Evento creado exitosamente
+
+  /events/{id}:
+    get:
+      tags:
+        - Eventos
+      summary: Obtener el detalle de un evento específico en XML
+      description: Este endpoint devuelve los datos estructurados en formato XML, validado por un XSD asociado.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle del evento devuelto con éxito
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Evento'
+        '404':
+          description: Evento no encontrado
+    put:
+      tags:
+        - Eventos
+      summary: Actualizar los datos de un evento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoInput'
+      responses:
+        '200':
+          description: Evento actualizado exitosamente
+    delete:
+      tags:
+        - Eventos
+      summary: Eliminar un evento
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Evento eliminado
+
+  /events/{id}/weather:
+    get:
+      tags:
+        - Eventos
+      summary: Consultar el clima en la ubicación del evento
+      description: Utiliza una API externa para devolver el clima basado en el lugar del evento.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Información del clima obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+            application/xml:
+              schema:
+                type: object
+
+  /speakers:
+    get:
+      tags:
+        - Ponentes
+      summary: Obtener un listado de todos los ponentes
+      responses:
+        '200':
+          description: Lista de ponentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ponente'
+    post:
+      tags:
+        - Ponentes
+      summary: Registrar un nuevo ponente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PonenteInput'
+      responses:
+        '201':
+          description: Ponente creado
+
+  /speakers/{id}:
+    get:
+      tags:
+        - Ponentes
+      summary: Obtener el perfil público de un ponente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle del ponente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ponente'
+    put:
+      tags:
+        - Ponentes
+      summary: Editar la información de un ponente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PonenteInput'
+      responses:
+        '200':
+          description: Ponente actualizado
+    delete:
+      tags:
+        - Ponentes
+      summary: Eliminar un ponente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Ponente eliminado
+
+  /attendees:
+    get:
+      tags:
+        - Asistentes
+      summary: Listar asistentes con paginación y filtros
+      parameters:
+        - name: page
+          in: query
+          description: Número de página para la paginación
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Cantidad de resultados por página
+          schema:
+            type: integer
+            default: 20
+        - name: grado
+          in: query
+          description: Filtrar por grado del asistente
+          schema:
+            type: string
+        - name: event_id
+          in: query
+          description: Filtrar por evento al que asisten
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista paginada y filtrada de asistentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asistente'
+    post:
+      tags:
+        - Asistentes
+      summary: Registrar un nuevo asistente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsistenteInput'
+      responses:
+        '201':
+          description: Asistente registrado
+
+  /attendees/{id}:
+    get:
+      tags:
+        - Asistentes
+      summary: Obtener los datos de inscripción de un asistente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Datos del asistente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asistente'
+    put:
+      tags:
+        - Asistentes
+      summary: Modificar los datos de un asistente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsistenteInput'
+      responses:
+        '200':
+          description: Asistente actualizado
+    delete:
+      tags:
+        - Asistentes
+      summary: Cancelar la inscripción de un asistente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Asistente eliminado
+
+components:
+  schemas:
+    Evento:
+      type: object
+      properties:
+        _id:
+          type: string
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        fecha:
+          type: string
+          format: date
+        lugar:
+          type: string
+        ids_ponentes:
+          type: array
+          items:
+            type: string
+        ids_asistentes:
+          type: array
+          items:
+            type: string
+        external_data:
+          type: object
+          properties:
+            coordinates:
+              type: object
+              properties:
+                lat:
+                  type: number
+                lon:
+                  type: number
+            weather_forecast:
+              type: string
+    EventoInput:
+      type: object
+      required:
+        - titulo
+        - fecha
+        - lugar
+      properties:
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        fecha:
+          type: string
+          format: date
+        lugar:
+          type: string
+        ids_ponentes:
+          type: array
+          items:
+            type: string
+        ids_asistentes:
+          type: array
+          items:
+            type: string
+
+    Ponente:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+        email:
+          type: string
+        departamento:
+          type: string
+        especialidad:
+          type: string
+    PonenteInput:
+      type: object
+      required:
+        - nombre
+        - email
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+        departamento:
+          type: string
+        especialidad:
+          type: string
+
+    Asistente:
+      type: object
+      properties:
+        _id:
+          type: string
+        nombre:
+          type: string
+        email:
+          type: string
+        grado:
+          type: string
+    AsistenteInput:
+      type: object
+      required:
+        - nombre
+        - email
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+        grado:
+          type: string
