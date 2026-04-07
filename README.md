@@ -19,3 +19,4 @@ Equipo de Desarrollo:
 - Carlos Richante
 - Pedro Varona
 - Alfredo Martinez
+- Juan García Obregón
