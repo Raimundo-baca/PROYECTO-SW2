@@ -5998,5 +5998,155 @@
         "nombre": "Juan Hernandez Barberá",
         "email": "asistente1000@universidad.es",
         "grado": "Biotecnología"
+    },
+    {
+        "id": 1001,
+        "nombre": "Asistente Extra 1001",
+        "email": "asistente1001@universidad.es",
+        "grado": "Ingenieria Informatica"
+    },
+    {
+        "id": 1002,
+        "nombre": "Asistente Extra 1002",
+        "email": "asistente1002@universidad.es",
+        "grado": "Ingenieria de Sistemas de Informacion"
+    },
+    {
+        "id": 1003,
+        "nombre": "Asistente Extra 1003",
+        "email": "asistente1003@universidad.es",
+        "grado": "Ingenieria del Software"
+    },
+    {
+        "id": 1004,
+        "nombre": "Asistente Extra 1004",
+        "email": "asistente1004@universidad.es",
+        "grado": "Ciencia de Datos"
+    },
+    {
+        "id": 1005,
+        "nombre": "Asistente Extra 1005",
+        "email": "asistente1005@universidad.es",
+        "grado": "Inteligencia Artificial"
+    },
+    {
+        "id": 1006,
+        "nombre": "Asistente Extra 1006",
+        "email": "asistente1006@universidad.es",
+        "grado": "Ingenieria Informatica"
+    },
+    {
+        "id": 1007,
+        "nombre": "Asistente Extra 1007",
+        "email": "asistente1007@universidad.es",
+        "grado": "Ingenieria de Sistemas de Informacion"
+    },
+    {
+        "id": 1008,
+        "nombre": "Asistente Extra 1008",
+        "email": "asistente1008@universidad.es",
+        "grado": "Ingenieria del Software"
+    },
+    {
+        "id": 1009,
+        "nombre": "Asistente Extra 1009",
+        "email": "asistente1009@universidad.es",
+        "grado": "Ciencia de Datos"
+    },
+    {
+        "id": 1010,
+        "nombre": "Asistente Extra 1010",
+        "email": "asistente1010@universidad.es",
+        "grado": "Inteligencia Artificial"
+    },
+    {
+        "id": 1011,
+        "nombre": "Asistente Extra 1011",
+        "email": "asistente1011@universidad.es",
+        "grado": "Ingenieria Informatica"
+    },
+    {
+        "id": 1012,
+        "nombre": "Asistente Extra 1012",
+        "email": "asistente1012@universidad.es",
+        "grado": "Ingenieria de Sistemas de Informacion"
+    },
+    {
+        "id": 1013,
+        "nombre": "Asistente Extra 1013",
+        "email": "asistente1013@universidad.es",
+        "grado": "Ingenieria del Software"
+    },
+    {
+        "id": 1014,
+        "nombre": "Asistente Extra 1014",
+        "email": "asistente1014@universidad.es",
+        "grado": "Ciencia de Datos"
+    },
+    {
+        "id": 1015,
+        "nombre": "Asistente Extra 1015",
+        "email": "asistente1015@universidad.es",
+        "grado": "Inteligencia Artificial"
+    },
+    {
+        "id": 1016,
+        "nombre": "Asistente Extra 1016",
+        "email": "asistente1016@universidad.es",
+        "grado": "Ingenieria Informatica"
+    },
+    {
+        "id": 1017,
+        "nombre": "Asistente Extra 1017",
+        "email": "asistente1017@universidad.es",
+        "grado": "Ingenieria de Sistemas de Informacion"
+    },
+    {
+        "id": 1018,
+        "nombre": "Asistente Extra 1018",
+        "email": "asistente1018@universidad.es",
+        "grado": "Ingenieria del Software"
+    },
+    {
+        "id": 1019,
+        "nombre": "Asistente Extra 1019",
+        "email": "asistente1019@universidad.es",
+        "grado": "Ciencia de Datos"
+    },
+    {
+        "id": 1020,
+        "nombre": "Asistente Extra 1020",
+        "email": "asistente1020@universidad.es",
+        "grado": "Inteligencia Artificial"
+    },
+    {
+        "id": 1021,
+        "nombre": "Asistente Extra 1021",
+        "email": "asistente1021@universidad.es",
+        "grado": "Ingenieria Informatica"
+    },
+    {
+        "id": 1022,
+        "nombre": "Asistente Extra 1022",
+        "email": "asistente1022@universidad.es",
+        "grado": "Ingenieria de Sistemas de Informacion"
+    },
+    {
+        "id": 1023,
+        "nombre": "Asistente Extra 1023",
+        "email": "asistente1023@universidad.es",
+        "grado": "Ingenieria del Software"
+    },
+    {
+        "id": 1024,
+        "nombre": "Asistente Extra 1024",
+        "email": "asistente1024@universidad.es",
+        "grado": "Ciencia de Datos"
+    },
+    {
+        "id": 1025,
+        "nombre": "Asistente Extra 1025",
+        "email": "asistente1025@universidad.es",
+        "grado": "Inteligencia Artificial"
     }
 ]

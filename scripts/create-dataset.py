@@ -12,11 +12,11 @@ Faker.seed(42)
 # CONFIGURACIÓN
 # =========================
 
-NUM_ASISTENTES = 1000
+NUM_ASISTENTES = 1025
 NUM_PONENTES = 1000
 NUM_EVENTOS = 1000
 
-OUTPUT_DIR = Path("dataset_eventos_academicos_json")
+OUTPUT_DIR = Path("dataset")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 grados = [
