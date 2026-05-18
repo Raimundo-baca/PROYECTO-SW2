@@ -26,8 +26,31 @@ const createAttendeeController = (AttendeeModel, EventModel) => {
 
   const getAttendees = async (req, res) => {
     try {
-      const attendees = await AttendeeModel.find();
-      return res.json(attendees);
+      const page = Math.max(Number.parseInt(req.query?.page, 10) || 1, 1);
+      const limit = Math.max(Number.parseInt(req.query?.limit, 10) || 20, 1);
+      const skip = (page - 1) * limit;
+      const filter = {};
+
+      if (req.query?.grado) {
+        filter.grado = req.query.grado;
+      }
+
+      if (req.query?.event_id) {
+        filter.event_id = req.query.event_id;
+      }
+
+      const [total, attendees] = await Promise.all([
+        AttendeeModel.countDocuments(filter),
+        AttendeeModel.find(filter).skip(skip).limit(limit),
+      ]);
+
+      return res.json({
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        data: attendees,
+      });
     } catch (error) {
       return handleError(res, error);
     }
