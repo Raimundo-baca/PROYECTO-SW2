@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const Speaker = require('../models/Speaker');
+const externalDataService = require('../services/externalDataService');
 
 const populateSpeakers = (query) => {
   if (query && typeof query.populate === 'function') {
@@ -25,7 +26,7 @@ const normalizeSpeakerIds = (speakerIds = []) => {
   return [...new Set(speakerIds.map((id) => String(id)))];
 };
 
-const createEventController = (EventModel, SpeakerModel) => {
+const createEventController = (EventModel, SpeakerModel, externalService = externalDataService) => {
   const handleError = (res, error) => {
     const status = error.name === 'ValidationError' || error.name === 'CastError' ? 400 : 500;
     return res.status(status).json({ error: error.message });
@@ -45,10 +46,12 @@ const createEventController = (EventModel, SpeakerModel) => {
     return existingSpeakers === uniqueSpeakerIds.length;
   };
 
-  const buildEventPayload = (body) => ({
+  const enrichExternalData = async (location) => externalService.getExternalDataForLocation(location);
+
+  const buildEventPayload = async (body) => ({
     ...body,
     ids_ponentes: normalizeSpeakerIds(body.ids_ponentes),
-    external_data: body.external_data || { available: false },
+    external_data: await enrichExternalData(body.lugar),
   });
 
   const getEvents = async (req, res) => {
@@ -76,13 +79,17 @@ const createEventController = (EventModel, SpeakerModel) => {
 
   const createEvent = async (req, res) => {
     try {
-      const payload = buildEventPayload(req.body);
-      const speakersExist = await validateSpeakersExist(payload.ids_ponentes);
+      const speakerIds = normalizeSpeakerIds(req.body.ids_ponentes);
+      const speakersExist = await validateSpeakersExist(speakerIds);
 
       if (!speakersExist) {
         return res.status(400).json({ error: 'Algunos ponentes no existen' });
       }
 
+      const payload = await buildEventPayload({
+        ...req.body,
+        ids_ponentes: speakerIds,
+      });
       const event = new EventModel(payload);
       const savedEvent = await event.save();
       const populatedEvent = await populateEventDocument(savedEvent);
@@ -103,6 +110,10 @@ const createEventController = (EventModel, SpeakerModel) => {
         if (!speakersExist) {
           return res.status(400).json({ error: 'Algunos ponentes no existen' });
         }
+      }
+
+      if (Object.prototype.hasOwnProperty.call(payload, 'lugar')) {
+        payload.external_data = await enrichExternalData(payload.lugar);
       }
 
       const event = await EventModel.findByIdAndUpdate(req.params.id, payload, {

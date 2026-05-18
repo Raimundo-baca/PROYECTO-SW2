@@ -96,7 +96,26 @@ const createSpeakerModel = () => ({
 async function run() {
   const Event = createEventModel();
   const Speaker = createSpeakerModel();
-  const controller = createEventController(Event, Speaker);
+  const externalDataService = {
+    calls: [],
+    async getExternalDataForLocation(location) {
+      this.calls.push(location);
+      return {
+        available: true,
+        coordinates: {
+          lat: 40.4168,
+          lon: -3.7038,
+          source: 'nominatim',
+        },
+        weather: {
+          temperature: 22,
+          wind_speed: 8,
+          source: 'open-meteo',
+        },
+      };
+    },
+  };
+  const controller = createEventController(Event, Speaker, externalDataService);
 
   let res = createResponse();
   await controller.getEvents({}, res);
@@ -130,7 +149,20 @@ async function run() {
   );
   assert.strictEqual(res.statusCode, 201);
   assert.strictEqual(res.body._id, 'event-created');
-  assert.deepStrictEqual(res.body.external_data, { available: false });
+  assert.deepStrictEqual(res.body.external_data, {
+    available: true,
+    coordinates: {
+      lat: 40.4168,
+      lon: -3.7038,
+      source: 'nominatim',
+    },
+    weather: {
+      temperature: 22,
+      wind_speed: 8,
+      source: 'open-meteo',
+    },
+  });
+  assert.deepStrictEqual(externalDataService.calls, ['Madrid']);
 
   res = createResponse();
   await controller.createEvent(
@@ -158,6 +190,20 @@ async function run() {
   assert.strictEqual(res.statusCode, 200);
   assert.strictEqual(res.body.lugar, 'Campus de Monteprincipe');
   assert.deepStrictEqual(res.body.ids_ponentes, ['speaker-2']);
+  assert.deepStrictEqual(res.body.external_data, {
+    available: true,
+    coordinates: {
+      lat: 40.4168,
+      lon: -3.7038,
+      source: 'nominatim',
+    },
+    weather: {
+      temperature: 22,
+      wind_speed: 8,
+      source: 'open-meteo',
+    },
+  });
+  assert.deepStrictEqual(externalDataService.calls, ['Madrid', 'Campus de Monteprincipe']);
 
   res = createResponse();
   await controller.updateEvent(

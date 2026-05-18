@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "node --check src/server.js && node --check src/app.js && node --check src/config/db.js && node --check src/models/Event.js && node --check src/models/Speaker.js && node --check src/models/Attendee.js && node --check src/controllers/speakerController.js && node --check src/controllers/eventController.js && node --check src/routes/speakerRoutes.js && node --check src/routes/eventRoutes.js && node --check scripts/seed.js && node tests/seed-build.test.js && node tests/speaker-controller.test.js && node tests/event-controller.test.js",
+    "test": "node --check src/server.js && node --check src/app.js && node --check src/config/db.js && node --check src/models/Event.js && node --check src/models/Speaker.js && node --check src/models/Attendee.js && node --check src/services/externalDataService.js && node --check src/controllers/speakerController.js && node --check src/controllers/eventController.js && node --check src/routes/speakerRoutes.js && node --check src/routes/eventRoutes.js && node --check scripts/seed.js && node tests/seed-build.test.js && node tests/speaker-controller.test.js && node tests/event-controller.test.js && node tests/external-data-service.test.js",
     "seed": "node scripts/seed.js",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
