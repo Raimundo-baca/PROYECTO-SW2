@@ -1,6 +1,7 @@
 const Event = require('../models/Event');
 const Speaker = require('../models/Speaker');
 const externalDataService = require('../services/externalDataService');
+const { buildEventXml } = require('../utils/eventXmlBuilder');
 
 const populateSpeakers = (query) => {
   if (query && typeof query.populate === 'function') {
@@ -71,7 +72,7 @@ const createEventController = (EventModel, SpeakerModel, externalService = exter
         return res.status(404).json({ error: 'Evento no encontrado' });
       }
 
-      return res.json(event);
+      return res.type('application/xml').send(buildEventXml(event));
     } catch (error) {
       return handleError(res, error);
     }

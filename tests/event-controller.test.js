@@ -6,15 +6,21 @@ const createResponse = () => {
   const res = {
     statusCode: 200,
     body: undefined,
+    contentTypeValue: undefined,
     status(code) {
       this.statusCode = code;
+      return this;
+    },
+    type(value) {
+      this.contentTypeValue = value;
       return this;
     },
     json(payload) {
       this.body = payload;
       return this;
     },
-    send() {
+    send(payload) {
+      this.body = payload;
       this.sent = true;
       return this;
     },
@@ -126,8 +132,13 @@ async function run() {
   res = createResponse();
   await controller.getEventById({ params: { id: 'event-1' } }, res);
   assert.strictEqual(res.statusCode, 200);
-  assert.strictEqual(res.body.lugar, 'Campus de Mostoles');
-  assert.strictEqual(res.body.populatedPath, 'ids_ponentes');
+  assert.strictEqual(res.contentTypeValue, 'application/xml');
+  assert.ok(res.body.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
+  assert.ok(res.body.includes('<event'));
+  assert.ok(res.body.includes('xsi:noNamespaceSchemaLocation="event_schema.xsd"'));
+  assert.ok(res.body.includes('<id>event-1</id>'));
+  assert.ok(res.body.includes('<lugar>Campus de Mostoles</lugar>'));
+  assert.ok(res.body.includes('<ponente_id>speaker-1</ponente_id>'));
 
   res = createResponse();
   await controller.getEventById({ params: { id: 'missing' } }, res);
