@@ -1,7 +1,7 @@
 const assert = require('assert');
 const mongoose = require('mongoose');
 
-const { buildSeedDocuments } = require('../scripts/seed');
+const { buildSeedDocuments, loadDataset, validateDataset } = require('../scripts/seed');
 
 const speakers = [
   {
@@ -90,5 +90,20 @@ assert.ok(eventDocs[0].ids_asistentes.some((id) => id.equals(attendee101._id)));
 assert.ok(!eventDocs[1].ids_asistentes.some((id) => id.equals(attendee101._id)));
 
 assert.deepStrictEqual(eventDocs[0].external_data, { available: false });
+
+const realDataset = loadDataset();
+
+assert.throws(
+  () => validateDataset({ speakers, events, attendees: attendees.slice(0, 1) }),
+  /mas de 1000 asistentes/,
+);
+
+validateDataset(realDataset);
+
+assert.ok(realDataset.attendees.length > 1000);
+assert.ok(realDataset.speakers.length > 0);
+assert.ok(realDataset.events.length > 0);
+assert.ok(new Set(realDataset.attendees.map((attendee) => attendee.grado)).size > 1);
+assert.ok(realDataset.events.some((event) => (event.ids_ponentes || []).length > 0));
 
 console.log('seed-build tests passed');

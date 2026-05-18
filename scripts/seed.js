@@ -9,6 +9,7 @@ const Speaker = require('../src/models/Speaker');
 const Attendee = require('../src/models/Attendee');
 
 const datasetDir = path.join(__dirname, '..', 'dataset');
+const MIN_ATTENDEE_DOCUMENTS = 1001;
 
 const readJsonFile = (fileName) => {
   const filePath = path.join(datasetDir, fileName);
@@ -106,6 +107,20 @@ const loadDataset = () => ({
   attendees: readJsonFile('asistentes.json'),
 });
 
+const validateDataset = ({ speakers, events, attendees }) => {
+  if (!Array.isArray(speakers) || !speakers.length) {
+    throw new Error('El dataset debe incluir al menos un ponente');
+  }
+
+  if (!Array.isArray(events) || !events.length) {
+    throw new Error('El dataset debe incluir al menos un evento');
+  }
+
+  if (!Array.isArray(attendees) || attendees.length < MIN_ATTENDEE_DOCUMENTS) {
+    throw new Error('El dataset debe incluir mas de 1000 asistentes');
+  }
+};
+
 const runSeed = async () => {
   const mongoUri = process.env.MONGODB_URI;
 
@@ -114,6 +129,8 @@ const runSeed = async () => {
   }
 
   const dataset = loadDataset();
+  validateDataset(dataset);
+
   const { speakerDocs, eventDocs, attendeeDocs } = buildSeedDocuments(dataset);
 
   await mongoose.connect(mongoUri, {
@@ -146,5 +163,6 @@ if (require.main === module) {
 module.exports = {
   buildSeedDocuments,
   loadDataset,
+  validateDataset,
   runSeed,
 };
