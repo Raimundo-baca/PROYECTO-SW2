@@ -146,6 +146,16 @@ async function run() {
   assert.deepStrictEqual(res.body, { error: 'Evento no encontrado' });
 
   res = createResponse();
+  await controller.getEventWeather({ params: { id: 'event-1' } }, res);
+  assert.strictEqual(res.statusCode, 200);
+  assert.deepStrictEqual(res.body, { available: false });
+
+  res = createResponse();
+  await controller.getEventWeather({ params: { id: 'missing' } }, res);
+  assert.strictEqual(res.statusCode, 404);
+  assert.deepStrictEqual(res.body, { error: 'Evento no encontrado' });
+
+  res = createResponse();
   await controller.createEvent(
     {
       body: {

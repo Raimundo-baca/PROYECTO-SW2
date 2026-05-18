@@ -5,6 +5,7 @@ const eventController = require('../controllers/eventController');
 const router = express.Router();
 
 router.get('/', eventController.getEvents);
+router.get('/:id/weather', eventController.getEventWeather);
 router.get('/:id', eventController.getEventById);
 router.post('/', eventController.createEvent);
 router.put('/:id', eventController.updateEvent);

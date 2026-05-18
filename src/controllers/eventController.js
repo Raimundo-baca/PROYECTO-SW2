@@ -78,6 +78,20 @@ const createEventController = (EventModel, SpeakerModel, externalService = exter
     }
   };
 
+  const getEventWeather = async (req, res) => {
+    try {
+      const event = await EventModel.findById(req.params.id);
+
+      if (!event) {
+        return res.status(404).json({ error: 'Evento no encontrado' });
+      }
+
+      return res.json(event.external_data || { available: false });
+    } catch (error) {
+      return handleError(res, error);
+    }
+  };
+
   const createEvent = async (req, res) => {
     try {
       const speakerIds = normalizeSpeakerIds(req.body.ids_ponentes);
@@ -150,6 +164,7 @@ const createEventController = (EventModel, SpeakerModel, externalService = exter
   return {
     getEvents,
     getEventById,
+    getEventWeather,
     createEvent,
     updateEvent,
     deleteEvent,

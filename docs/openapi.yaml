@@ -1,345 +1,456 @@
 openapi: 3.0.3
 info:
-  title: API Gestión de Eventos Académicos
-  description: API REST para la gestión de eventos universitarios, ponentes y asistentes. Diseñada para la asignatura, interactúa con MongoDB y APIs externas, soportando JSON y XML.
+  title: API Gestion de Eventos Academicos
+  description: >
+    API REST para gestionar eventos academicos universitarios, ponentes y
+    asistentes. Usa MongoDB, ofrece mensajes JSON y XML, y enriquece eventos
+    con datos externos consumidos desde Nominatim en XML y Open-Meteo en JSON.
   version: 1.0.0
+
 servers:
   - url: http://localhost:3000/api
-    description: Servidor Local de Desarrollo
+    description: Servidor local de desarrollo
 
 tags:
   - name: Eventos
-    description: Gestión de actos académicos
+    description: Gestion de actos academicos
   - name: Ponentes
-    description: Gestión de expertos y ponentes
+    description: Gestion de expertos y ponentes
   - name: Asistentes
-    description: Gestión de inscripciones y asistentes
+    description: Gestion de inscripciones y asistentes
 
 paths:
   /events:
     get:
       tags:
         - Eventos
-      summary: Obtener un listado de todos los eventos
+      summary: Listar eventos
       responses:
-        '200':
-          description: Lista de eventos devuelta con éxito
+        "200":
+          description: Lista de eventos devuelta correctamente
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Evento'
+                  $ref: "#/components/schemas/Event"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Eventos
-      summary: Crear un nuevo evento académico
-      description: Al crear un evento, el servidor consume una API externa para obtener coordenadas y clima del lugar.
+      summary: Crear un evento academico
+      description: >
+        Crea un evento y consulta Nominatim en XML para coordenadas y Open-Meteo
+        en JSON para clima. Si las APIs externas fallan, el evento se crea con
+        external_data.available=false.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventoInput'
+              $ref: "#/components/schemas/EventInput"
       responses:
-        '201':
-          description: Evento creado exitosamente
+        "201":
+          description: Evento creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /events/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Eventos
-      summary: Obtener el detalle de un evento específico en XML
-      description: Este endpoint devuelve los datos estructurados en formato XML, validado por un XSD asociado.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Obtener el detalle de un evento en XML
+      description: Devuelve un evento en XML validable con docs/event_schema.xsd.
       responses:
-        '200':
-          description: Detalle del evento devuelto con éxito
+        "200":
+          description: Detalle del evento en XML
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/Evento'
-        '404':
-          description: Evento no encontrado
+                $ref: "#/components/schemas/EventXml"
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <event xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="event_schema.xsd">
+                  <id>665f00000000000000000001</id>
+                  <titulo>Congreso Internacional de IA</titulo>
+                  <descripcion>Evento academico sobre IA.</descripcion>
+                  <fecha>2026-05-15</fecha>
+                  <lugar>Madrid</lugar>
+                  <ids_ponentes>
+                    <ponente_id>665f00000000000000000002</ponente_id>
+                  </ids_ponentes>
+                  <ids_asistentes>
+                    <asistente_id>665f00000000000000000003</asistente_id>
+                  </ids_asistentes>
+                </event>
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags:
         - Eventos
-      summary: Actualizar los datos de un evento
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Actualizar un evento
+      description: Si se actualiza lugar, se vuelven a consultar los datos externos.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventoInput'
+              $ref: "#/components/schemas/EventUpdate"
       responses:
-        '200':
-          description: Evento actualizado exitosamente
+        "200":
+          description: Evento actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Eventos
       summary: Eliminar un evento
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
-        '204':
-          description: Evento eliminado
+        "204":
+          description: Evento eliminado correctamente
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /events/{id}/weather:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Eventos
-      summary: Consultar el clima en la ubicación del evento
-      description: Utiliza una API externa para devolver el clima basado en el lugar del evento.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Obtener datos externos guardados del evento
+      description: Devuelve el objeto external_data guardado en MongoDB para el evento.
       responses:
-        '200':
-          description: Información del clima obtenida exitosamente
+        "200":
+          description: Datos externos del evento
           content:
             application/json:
               schema:
-                type: object
-            application/xml:
-              schema:
-                type: object
+                $ref: "#/components/schemas/ExternalData"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /speakers:
     get:
       tags:
         - Ponentes
-      summary: Obtener un listado de todos los ponentes
+      summary: Listar ponentes
       responses:
-        '200':
+        "200":
           description: Lista de ponentes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Ponente'
+                  $ref: "#/components/schemas/Speaker"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Ponentes
-      summary: Registrar un nuevo ponente
+      summary: Crear un ponente
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PonenteInput'
+              $ref: "#/components/schemas/SpeakerInput"
       responses:
-        '201':
-          description: Ponente creado
+        "201":
+          description: Ponente creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Speaker"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /speakers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Ponentes
-      summary: Obtener el perfil público de un ponente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Obtener un ponente
       responses:
-        '200':
+        "200":
           description: Detalle del ponente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ponente'
+                $ref: "#/components/schemas/Speaker"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags:
         - Ponentes
-      summary: Editar la información de un ponente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Actualizar un ponente
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PonenteInput'
+              $ref: "#/components/schemas/SpeakerUpdate"
       responses:
-        '200':
-          description: Ponente actualizado
+        "200":
+          description: Ponente actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Speaker"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Ponentes
       summary: Eliminar un ponente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
-        '204':
-          description: Ponente eliminado
+        "204":
+          description: Ponente eliminado correctamente
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /attendees:
     get:
       tags:
         - Asistentes
-      summary: Listar asistentes con paginación y filtros
+      summary: Listar asistentes con paginacion y filtros
       parameters:
         - name: page
           in: query
-          description: Número de página para la paginación
+          description: Numero de pagina, empezando en 1
           schema:
             type: integer
+            minimum: 1
             default: 1
         - name: limit
           in: query
-          description: Cantidad de resultados por página
+          description: Cantidad de resultados por pagina
           schema:
             type: integer
+            minimum: 1
             default: 20
         - name: grado
           in: query
-          description: Filtrar por grado del asistente
+          description: Filtrar asistentes por grado
           schema:
             type: string
         - name: event_id
           in: query
-          description: Filtrar por evento al que asisten
+          description: Filtrar asistentes por evento
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Lista paginada y filtrada de asistentes
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Asistente'
+                $ref: "#/components/schemas/PaginatedAttendees"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Asistentes
-      summary: Registrar un nuevo asistente
+      summary: Crear un asistente
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AsistenteInput'
+              $ref: "#/components/schemas/AttendeeInput"
       responses:
-        '201':
-          description: Asistente registrado
-
-  /attendees/{id}:
-    get:
-      tags:
-        - Asistentes
-      summary: Obtener los datos de inscripción de un asistente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Datos del asistente
+        "201":
+          description: Asistente creado correctamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Asistente'
+                $ref: "#/components/schemas/Attendee"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /attendees/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Asistentes
+      summary: Obtener un asistente
+      responses:
+        "200":
+          description: Detalle del asistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendee"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags:
         - Asistentes
-      summary: Modificar los datos de un asistente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Actualizar un asistente
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AsistenteInput'
+              $ref: "#/components/schemas/AttendeeUpdate"
       responses:
-        '200':
-          description: Asistente actualizado
+        "200":
+          description: Asistente actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendee"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Asistentes
-      summary: Cancelar la inscripción de un asistente
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
+      summary: Eliminar un asistente
       responses:
-        '204':
-          description: Asistente eliminado
+        "204":
+          description: Asistente eliminado correctamente
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Identificador MongoDB del recurso
+      schema:
+        type: string
+        example: 665f00000000000000000001
+
+  responses:
+    BadRequest:
+      description: Peticion incorrecta o datos invalidos
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
-    Evento:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Evento no encontrado
+
+    Event:
       type: object
       properties:
         _id:
           type: string
+          example: 665f00000000000000000001
         titulo:
           type: string
+          example: Congreso Internacional de IA
         descripcion:
           type: string
+          example: Evento academico sobre inteligencia artificial.
         fecha:
           type: string
-          format: date
+          format: date-time
+          example: "2026-05-15T00:00:00.000Z"
         lugar:
           type: string
+          example: Madrid
         ids_ponentes:
           type: array
           items:
-            type: string
+            oneOf:
+              - type: string
+              - $ref: "#/components/schemas/Speaker"
         ids_asistentes:
           type: array
           items:
             type: string
         external_data:
-          type: object
-          properties:
-            coordinates:
-              type: object
-              properties:
-                lat:
-                  type: number
-                lon:
-                  type: number
-            weather_forecast:
-              type: string
-    EventoInput:
+          $ref: "#/components/schemas/ExternalData"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    EventInput:
       type: object
       required:
         - titulo
@@ -348,6 +459,57 @@ components:
       properties:
         titulo:
           type: string
+          example: Congreso Internacional de IA
+        descripcion:
+          type: string
+          example: Evento academico sobre inteligencia artificial.
+        fecha:
+          type: string
+          format: date
+          example: "2026-05-15"
+        lugar:
+          type: string
+          example: Madrid
+        ids_ponentes:
+          type: array
+          items:
+            type: string
+          example:
+            - 665f00000000000000000002
+
+    EventUpdate:
+      type: object
+      description: Campos opcionales para actualizar un evento.
+      properties:
+        titulo:
+          type: string
+          example: Congreso Internacional de IA
+        descripcion:
+          type: string
+          example: Evento academico sobre inteligencia artificial.
+        fecha:
+          type: string
+          format: date
+          example: "2026-05-15"
+        lugar:
+          type: string
+          example: Madrid
+        ids_ponentes:
+          type: array
+          items:
+            type: string
+          example:
+            - 665f00000000000000000002
+
+    EventXml:
+      type: object
+      xml:
+        name: event
+      properties:
+        id:
+          type: string
+        titulo:
+          type: string
         descripcion:
           type: string
         fecha:
@@ -356,62 +518,201 @@ components:
         lugar:
           type: string
         ids_ponentes:
-          type: array
-          items:
-            type: string
+          type: object
+          properties:
+            ponente_id:
+              type: array
+              items:
+                type: string
         ids_asistentes:
+          type: object
+          properties:
+            asistente_id:
+              type: array
+              items:
+                type: string
+
+    ExternalData:
+      type: object
+      properties:
+        available:
+          type: boolean
+          example: true
+        coordinates:
+          type: object
+          nullable: true
+          properties:
+            lat:
+              type: number
+              example: 40.4168
+            lon:
+              type: number
+              example: -3.7038
+            source:
+              type: string
+              example: nominatim
+        weather:
+          type: object
+          nullable: true
+          properties:
+            temperature:
+              type: number
+              example: 22
+            wind_speed:
+              type: number
+              example: 8
+            source:
+              type: string
+              example: open-meteo
+        error:
+          type: string
+          example: External API unavailable
+
+    Speaker:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 665f00000000000000000002
+        nombre:
+          type: string
+          example: Ada Lovelace
+        email:
+          type: string
+          format: email
+          example: ada.lovelace@universidad.es
+        departamento:
+          type: string
+          example: Departamento de Informatica
+        especialidad:
+          type: string
+          example: Bases de Datos
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SpeakerInput:
+      type: object
+      required:
+        - nombre
+        - email
+      properties:
+        nombre:
+          type: string
+          example: Ada Lovelace
+        email:
+          type: string
+          format: email
+          example: ada.lovelace@universidad.es
+        departamento:
+          type: string
+          example: Departamento de Informatica
+        especialidad:
+          type: string
+          example: Bases de Datos
+
+    SpeakerUpdate:
+      type: object
+      description: Campos opcionales para actualizar un ponente.
+      properties:
+        nombre:
+          type: string
+          example: Ada Lovelace
+        email:
+          type: string
+          format: email
+          example: ada.lovelace@universidad.es
+        departamento:
+          type: string
+          example: Departamento de Informatica
+        especialidad:
+          type: string
+          example: Bases de Datos
+
+    Attendee:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 665f00000000000000000003
+        nombre:
+          type: string
+          example: Grace Hopper
+        email:
+          type: string
+          format: email
+          example: grace.hopper@universidad.es
+        grado:
+          type: string
+          example: Ingenieria Informatica
+        event_id:
+          type: string
+          example: 665f00000000000000000001
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AttendeeInput:
+      type: object
+      required:
+        - nombre
+        - email
+        - event_id
+      properties:
+        nombre:
+          type: string
+          example: Grace Hopper
+        email:
+          type: string
+          format: email
+          example: grace.hopper@universidad.es
+        grado:
+          type: string
+          example: Ingenieria Informatica
+        event_id:
+          type: string
+          example: 665f00000000000000000001
+
+    AttendeeUpdate:
+      type: object
+      description: Campos opcionales para actualizar un asistente.
+      properties:
+        nombre:
+          type: string
+          example: Grace Hopper
+        email:
+          type: string
+          format: email
+          example: grace.hopper@universidad.es
+        grado:
+          type: string
+          example: Ingenieria Informatica
+        event_id:
+          type: string
+          example: 665f00000000000000000001
+
+    PaginatedAttendees:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 1000
+        totalPages:
+          type: integer
+          example: 50
+        data:
           type: array
           items:
-            type: string
-
-    Ponente:
-      type: object
-      properties:
-        _id:
-          type: string
-        nombre:
-          type: string
-        email:
-          type: string
-        departamento:
-          type: string
-        especialidad:
-          type: string
-    PonenteInput:
-      type: object
-      required:
-        - nombre
-        - email
-      properties:
-        nombre:
-          type: string
-        email:
-          type: string
-        departamento:
-          type: string
-        especialidad:
-          type: string
-
-    Asistente:
-      type: object
-      properties:
-        _id:
-          type: string
-        nombre:
-          type: string
-        email:
-          type: string
-        grado:
-          type: string
-    AsistenteInput:
-      type: object
-      required:
-        - nombre
-        - email
-      properties:
-        nombre:
-          type: string
-        email:
-          type: string
-        grado:
-          type: string
+            $ref: "#/components/schemas/Attendee"
