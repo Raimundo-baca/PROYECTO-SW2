@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
+const eventRoutes = require('./routes/eventRoutes');
 const speakerRoutes = require('./routes/speakerRoutes');
 
 const app = express();
@@ -22,6 +23,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+app.use('/api/events', eventRoutes);
 app.use('/api/speakers', speakerRoutes);
 
 app.use((req, res) => {
