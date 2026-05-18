@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 
+const speakerRoutes = require('./routes/speakerRoutes');
+
 const app = express();
 
 app.use(cors());
@@ -19,6 +21,8 @@ app.get('/api/health', (req, res) => {
     service: 'proyecto-sw2-eventos-academicos',
   });
 });
+
+app.use('/api/speakers', speakerRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
